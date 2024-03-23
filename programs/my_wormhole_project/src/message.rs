@@ -28,28 +28,37 @@ impl AnchorSerialize for SignMessage {
 }
 
 impl AnchorDeserialize for SignMessage {
-    fn deserialize(buf: &mut &[u8]) -> io::Result<Self> {
+    fn deserialize_reader<R: io::prelude::Read>(reader: &mut R) -> io::Result<Self> {
+        let mut buf = [0; 3]; // Assuming the message contains at least 3 bytes
+        reader.read_exact(&mut buf)?;
+
         match buf[0] {
-            PAYLOAD_ID_SIGN => Ok(SignMessage::Sign {
-                program_id: Pubkey::try_from(&buf[1..33]).unwrap(),
-            }),
+            PAYLOAD_ID_SIGN => {
+                // Deserialize Sign message
+                let mut program_id_buf = [0; 32];
+                reader.read_exact(&mut program_id_buf)?;
+                let program_id = Pubkey::try_from(&program_id_buf[..]).unwrap();
+                Ok(SignMessage::Sign { program_id })
+            }
             PAYLOAD_ID_MESSAGE => {
-                let length = {
-                    let mut out = [0u8; 2];
-                    out.copy_from_slice(&buf[1..3]);
-                    u16::from_be_bytes(out) as usize
-                };
+                // Deserialize Message message
+                let mut length_buf = [0; 2];
+                reader.read_exact(&mut length_buf)?;
+                let length = u16::from_be_bytes(length_buf) as usize;
+
                 if length > SIGN_MAX_LENGTH {
-                    Err(io::Error::new(
+                    return Err(io::Error::new(
                         io::ErrorKind::InvalidInput,
-                        format!("message exceeds {SIGN_MAX_LENGTH} bytes"),
-                    ))
-                } else {
-                    Ok(SignMessage::SignMessage {
-                        message: buf[3..(3 + length)].to_vec(),
-                    })
+                        format!("message exceeds {} bytes", SIGN_MAX_LENGTH),
+                    ));
                 }
-            },
+
+                let mut message_data = vec![0; length];
+                reader.read_exact(&mut message_data)?;
+                Ok(SignMessage::SignMessage {
+                    message: message_data,
+                })
+            }
             _ => Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "invalid payload ID",

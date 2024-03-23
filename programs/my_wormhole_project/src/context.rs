@@ -59,6 +59,7 @@ pub struct Initialize<'info> {
         bump,
         seeds::program = wormhole_program
     )]
+    /// CHECK: defualt wormhole ext.
     pub wormhole_sequence: UncheckedAccount<'info>,
 
     #[account(
@@ -69,6 +70,7 @@ pub struct Initialize<'info> {
         ],
         bump,
     )]
+    /// CHECK: defualt wormhole ext.
     pub wormhole_message: UncheckedAccount<'info>,
 
     /// Clock sysvar.
@@ -158,6 +160,7 @@ pub struct SendMessage<'info> {
         ],
         bump,
     )]
+    /// CHECK: defualt wormhole ext.
     pub wormhole_message: UncheckedAccount<'info>,
 
     /// System program.
