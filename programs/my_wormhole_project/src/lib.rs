@@ -1,11 +1,16 @@
 use anchor_lang::prelude::*;
 
-pub use context::*;
+pub mod state;
 pub use state::*;
 
 pub mod context;
-pub mod state;
+pub use context::*;
 
+pub mod error;
+pub use error::*;
+
+pub mod message;
+pub use message::*;
 declare_id!("F1tEp6JUoq255o2nWr1nEZJcQtv5dKWryLe6scHLqmPd");
 
 #[program]
@@ -136,7 +141,7 @@ pub mod my_wormhole_project {
         let wormhole_emitter = &ctx.accounts.wormhole_emitter;
         let config = &ctx.accounts.config;
 
-        let payload: Vec<u8> = Sign::SignMessage { message }.try_to_vec()?;
+        let payload: Vec<u8> = SignMessage::SignMessage { message }.try_to_vec()?;
 
         wormhole::post_message(
             CpiContext::new_with_signer(
@@ -176,7 +181,7 @@ pub mod my_wormhole_project {
     pub fn receive_message(ctx: Context<ReceiveMessage>, vaa_hash: [u8; 32]) -> Result<()> {
         let posted_message = &ctx.accounts.posted;
 
-        if let Sign::SignMessage { message } = posted_message.data() {
+        if let SignMessage::SignMessage { message } = posted_message.data() {
             // HelloWorldMessage cannot be larger than the maximum size of the account.
             require!(
                 message.len() <= MESSAGE_MAX_LENGTH,
