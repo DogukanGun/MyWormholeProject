@@ -182,7 +182,7 @@ pub mod my_wormhole_project {
         let posted_message = &ctx.accounts.posted;
 
         if let SignMessage::SignMessage { message } = posted_message.data() {
-            // HelloWorldMessage cannot be larger than the maximum size of the account.
+            // MyWormholeProjectMessage cannot be larger than the maximum size of the account.
             require!(
                 message.len() <= MESSAGE_MAX_LENGTH,
                 WormholeError::InvalidMessage,
